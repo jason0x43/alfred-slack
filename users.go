@@ -44,6 +44,10 @@ func (c UsersCommand) Items(arg, data string) (items []alfred.Item, err error) {
 	}
 
 	for _, user := range cache.Users {
+		if user.Deleted {
+			continue
+		}
+
 		if channel != nil && !isInChannel(user.ID, channel) {
 			continue
 		}

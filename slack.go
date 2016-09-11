@@ -93,6 +93,7 @@ type Pin struct {
 type User struct {
 	ID      string `json:"id"`
 	Name    string `json:"name"`
+	Deleted bool   `json:"deleted"`
 	Profile struct {
 		FirstName string `json:"first_name"`
 		LastName  string `json:"last_name"`
