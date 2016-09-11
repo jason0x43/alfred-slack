@@ -93,13 +93,33 @@ func (c ChannelsCommand) Items(arg, data string) (items []alfred.Item, err error
 				}
 			}
 		} else {
-			if alfred.FuzzyMatches("Pins...", arg) {
+			if alfred.FuzzyMatches("open", arg) {
+				item := alfred.Item{
+					UID:          fmt.Sprintf("%s.channels.open", workflow.BundleID()),
+					Title:        "Open",
+					Subtitle:     "Open this channel in the Slack app",
+					Autocomplete: "Open",
+					Arg: &alfred.ItemArg{
+						Keyword: "channels",
+						Mode:    alfred.ModeDo,
+						Data: alfred.Stringify(&channelConfig{
+							ToOpen: &channelID{
+								Channel: cid,
+								Team:    cache.Auth.TeamID,
+							},
+						}),
+					},
+				}
+				items = append(items, item)
+			}
+
+			if alfred.FuzzyMatches("pins", arg) {
 				property = "pins"
 				item := alfred.Item{
-					// UID:          c.Workflow().BundleID,
-					Title:        "Pins...",
+					UID:          fmt.Sprintf("%s.channels.pins", workflow.BundleID()),
+					Title:        "Pins",
 					Subtitle:     "List the pins for this channel",
-					Autocomplete: "Pins...",
+					Autocomplete: "Pins",
 					Arg: &alfred.ItemArg{
 						Keyword: "channels",
 						Data: alfred.Stringify(&channelConfig{
@@ -111,12 +131,12 @@ func (c ChannelsCommand) Items(arg, data string) (items []alfred.Item, err error
 				items = append(items, item)
 			}
 
-			if alfred.FuzzyMatches("Members...", arg) {
-				property = "members"
+			if alfred.FuzzyMatches("members", arg) {
 				item := alfred.Item{
-					Title:        "Members...",
+					UID:          fmt.Sprintf("%s.channels.members", workflow.BundleID()),
+					Title:        "Members",
 					Subtitle:     "List the members in this channel",
-					Autocomplete: "Members...",
+					Autocomplete: "Members",
 					Arg: &alfred.ItemArg{
 						Keyword: "users",
 						Data: alfred.Stringify(&userConfig{
@@ -140,13 +160,7 @@ func (c ChannelsCommand) Items(arg, data string) (items []alfred.Item, err error
 					UID:          channel.ID,
 					Arg: &alfred.ItemArg{
 						Keyword: "channels",
-						Mode:    alfred.ModeDo,
-						Data: alfred.Stringify(&channelConfig{
-							ToOpen: &channelID{
-								Channel: channel.ID,
-								Team:    cache.Auth.TeamID,
-							},
-						}),
+						Data:    alfred.Stringify(&channelConfig{Channel: &channel.ID}),
 					},
 				}
 
@@ -155,10 +169,16 @@ func (c ChannelsCommand) Items(arg, data string) (items []alfred.Item, err error
 				}
 
 				item.AddMod(alfred.ModCmd, alfred.ItemMod{
-					Subtitle: "Details...",
+					Subtitle: "Open this channel in the Slack app",
 					Arg: &alfred.ItemArg{
 						Keyword: "channels",
-						Data:    alfred.Stringify(&channelConfig{Channel: &channel.ID}),
+						Mode:    alfred.ModeDo,
+						Data: alfred.Stringify(&channelConfig{
+							ToOpen: &channelID{
+								Channel: channel.ID,
+								Team:    cache.Auth.TeamID,
+							},
+						}),
 					},
 				})
 
