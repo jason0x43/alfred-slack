@@ -99,6 +99,19 @@
 				<false/>
 			</dict>
 		</array>
+		<key>77D43212-23F8-412C-95FE-8A45482D3E53</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>7C24829E-6EDA-48DF-93AE-4C238B4A6355</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<true/>
+			</dict>
+		</array>
 		<key>79B9E144-A6E5-4994-AC86-975D9BF879FE</key>
 		<array>
 			<dict>
@@ -468,7 +481,7 @@
 				<key>scriptfile</key>
 				<string></string>
 				<key>subtext</key>
-				<string>Users</string>
+				<string>Show online users</string>
 				<key>title</key>
 				<string>slu</string>
 				<key>type</key>
@@ -480,6 +493,49 @@
 			<string>alfred.workflow.input.scriptfilter</string>
 			<key>uid</key>
 			<string>79B9E144-A6E5-4994-AC86-975D9BF879FE</string>
+			<key>version</key>
+			<integer>2</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>alfredfiltersresults</key>
+				<false/>
+				<key>argumenttype</key>
+				<integer>1</integer>
+				<key>escaping</key>
+				<integer>4</integer>
+				<key>keyword</key>
+				<string>slu*</string>
+				<key>queuedelaycustom</key>
+				<integer>3</integer>
+				<key>queuedelayimmediatelyinitially</key>
+				<true/>
+				<key>queuedelaymode</key>
+				<integer>0</integer>
+				<key>queuemode</key>
+				<integer>1</integer>
+				<key>runningsubtext</key>
+				<string>Slacking...</string>
+				<key>script</key>
+				<string>./alfred-slack "$1" "{\"keyword\":\"users\",\"data\":\"{\\\"ShowAll\\\":true}\"}"</string>
+				<key>scriptargtype</key>
+				<integer>1</integer>
+				<key>scriptfile</key>
+				<string></string>
+				<key>subtext</key>
+				<string>Show all users</string>
+				<key>title</key>
+				<string>slu*</string>
+				<key>type</key>
+				<integer>0</integer>
+				<key>withspace</key>
+				<true/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.input.scriptfilter</string>
+			<key>uid</key>
+			<string>77D43212-23F8-412C-95FE-8A45482D3E53</string>
 			<key>version</key>
 			<integer>2</integer>
 		</dict>
@@ -587,6 +643,13 @@
 			<key>ypos</key>
 			<integer>200</integer>
 		</dict>
+		<key>77D43212-23F8-412C-95FE-8A45482D3E53</key>
+		<dict>
+			<key>xpos</key>
+			<integer>230</integer>
+			<key>ypos</key>
+			<integer>530</integer>
+		</dict>
 		<key>79B9E144-A6E5-4994-AC86-975D9BF879FE</key>
 		<dict>
 			<key>xpos</key>
@@ -613,7 +676,7 @@
 			<key>xpos</key>
 			<integer>230</integer>
 			<key>ypos</key>
-			<integer>530</integer>
+			<integer>650</integer>
 		</dict>
 		<key>8CB9E2DD-A4FC-4AA5-B229-88174066B821</key>
 		<dict>

@@ -48,6 +48,10 @@ func (c UsersCommand) Items(arg, data string) (items []alfred.Item, err error) {
 			continue
 		}
 
+		if !cfg.ShowAll && user.Presence == "away" {
+			continue
+		}
+
 		if channel != nil && !isInChannel(user.ID, channel) {
 			continue
 		}
@@ -140,4 +144,5 @@ type userConfig struct {
 	ToMessage *dmID
 	ToOpen    *dmID
 	Channel   *string
+	ShowAll   bool
 }
