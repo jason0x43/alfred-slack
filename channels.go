@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"sort"
 
 	"github.com/jason0x43/go-alfred"
 	"github.com/pkg/browser"
@@ -149,27 +150,11 @@ func (c ChannelsCommand) Items(arg, data string) (items []alfred.Item, err error
 		}
 	} else {
 		for _, channel := range cache.Channels {
-			if !cfg.ShowAll && !isInChannel(cache.Auth.UserID, &channel) {
-				continue
-			}
-
 			if alfred.FuzzyMatches(channel.Name, arg) {
 				item := alfred.Item{
 					Title:        channel.Name,
 					Autocomplete: channel.Name,
 					UID:          channel.ID,
-					Arg: &alfred.ItemArg{
-						Keyword: "channels",
-						Data:    alfred.Stringify(&channelConfig{Channel: &channel.ID}),
-					},
-				}
-
-				if !isInChannel(cache.Auth.UserID, &channel) {
-					item.Icon = "icon_faded.png"
-				}
-
-				item.AddMod(alfred.ModCmd, alfred.ItemMod{
-					Subtitle: "Open this channel in the Slack app",
 					Arg: &alfred.ItemArg{
 						Keyword: "channels",
 						Mode:    alfred.ModeDo,
@@ -180,6 +165,23 @@ func (c ChannelsCommand) Items(arg, data string) (items []alfred.Item, err error
 							},
 						}),
 					},
+				}
+
+				if !isInChannel(cache.Auth.UserID, &channel) {
+					item.Icon = "icon_faded.png"
+
+					// If the user isn't subscribed to the channel, take away
+					// its UID so that Alfred will leave it after the
+					// subscribed channels
+					item.UID = ""
+				}
+
+				item.AddMod(alfred.ModCmd, alfred.ItemMod{
+					Subtitle: "Details...",
+					Arg: &alfred.ItemArg{
+						Keyword: "channels",
+						Data:    alfred.Stringify(&channelConfig{Channel: &channel.ID}),
+					},
 				})
 
 				items = append(items, item)
@@ -187,6 +189,7 @@ func (c ChannelsCommand) Items(arg, data string) (items []alfred.Item, err error
 		}
 
 		alfred.FuzzySort(items, arg)
+		sort.Stable(bySubscription(items))
 	}
 
 	return
@@ -222,5 +225,19 @@ type channelConfig struct {
 	ToOpen   *channelID
 	Property *string
 	ToBrowse *string
-	ShowAll  bool
+}
+
+type bySubscription alfred.Items
+
+func (b bySubscription) Len() int {
+	return len(b)
+}
+
+func (b bySubscription) Swap(i, j int) {
+	b[i], b[j] = b[j], b[i]
+}
+
+func (b bySubscription) Less(i, j int) bool {
+	dlog.Printf("comparing %s to %s", b[i].Title, b[j].Title)
+	return b[i].Icon != "icon_faded.png" && b[j].Icon == "icon_faded.png"
 }

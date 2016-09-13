@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 
 	"github.com/jason0x43/go-alfred"
 	"github.com/pkg/browser"
@@ -48,10 +49,6 @@ func (c UsersCommand) Items(arg, data string) (items []alfred.Item, err error) {
 			continue
 		}
 
-		if !cfg.ShowAll && user.Presence == "away" {
-			continue
-		}
-
 		if channel != nil && !isInChannel(user.ID, channel) {
 			continue
 		}
@@ -76,6 +73,10 @@ func (c UsersCommand) Items(arg, data string) (items []alfred.Item, err error) {
 
 			if user.Presence == "away" {
 				item.Icon = "icon_faded.png"
+
+				// If the user is away, take away their UID so that Alfred will
+				// leave them after the active users
+				item.UID = ""
 			}
 
 			item.AddMod(alfred.ModCmd, alfred.ItemMod{
@@ -97,6 +98,7 @@ func (c UsersCommand) Items(arg, data string) (items []alfred.Item, err error) {
 	}
 
 	alfred.FuzzySort(items, arg)
+	sort.Stable(byStatus(items))
 
 	return
 }
@@ -144,5 +146,19 @@ type userConfig struct {
 	ToMessage *dmID
 	ToOpen    *dmID
 	Channel   *string
-	ShowAll   bool
+}
+
+type byStatus alfred.Items
+
+func (b byStatus) Len() int {
+	return len(b)
+}
+
+func (b byStatus) Swap(i, j int) {
+	b[i], b[j] = b[j], b[i]
+}
+
+func (b byStatus) Less(i, j int) bool {
+	dlog.Printf("comparing %s to %s", b[i].Title, b[j].Title)
+	return b[i].Icon != "icon_faded.png" && b[j].Icon == "icon_faded.png"
 }
