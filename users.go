@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+	"time"
 
 	"github.com/jason0x43/go-alfred"
 	"github.com/pkg/browser"
@@ -118,6 +119,7 @@ func (c UsersCommand) Do(data string) (out string, err error) {
 		if channel, err = s.OpenDirectMessage(cfg.ToMessage.User); err != nil {
 			return
 		}
+		time.Sleep(1 * time.Second)
 		browser.OpenURL(fmt.Sprintf("slack://channel?team=%s&id=%s", cfg.ToMessage.Team, channel))
 	}
 
