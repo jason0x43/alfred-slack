@@ -480,84 +480,84 @@
 			<key>xpos</key>
 			<integer>710</integer>
 			<key>ypos</key>
-			<integer>80</integer>
+			<integer>70</integer>
 		</dict>
 		<key>0A7F94DA-8824-4BEA-892C-25D9882A4143</key>
 		<dict>
 			<key>xpos</key>
 			<integer>230</integer>
 			<key>ypos</key>
-			<integer>50</integer>
+			<integer>40</integer>
 		</dict>
 		<key>21C52BFE-B956-4415-9A72-ECC09E4510AB</key>
 		<dict>
 			<key>xpos</key>
 			<integer>230</integer>
 			<key>ypos</key>
-			<integer>170</integer>
+			<integer>160</integer>
 		</dict>
 		<key>25AB4811-8BBD-4C4D-BDDE-ED2CC5DD5809</key>
 		<dict>
 			<key>xpos</key>
 			<integer>800</integer>
 			<key>ypos</key>
-			<integer>80</integer>
+			<integer>70</integer>
 		</dict>
 		<key>39D382E4-1813-4AEE-B48C-65B89A1D6821</key>
 		<dict>
 			<key>xpos</key>
 			<integer>40</integer>
 			<key>ypos</key>
-			<integer>50</integer>
+			<integer>40</integer>
 		</dict>
 		<key>5C883BB3-E119-43B2-B4F8-189600C8A8F4</key>
 		<dict>
 			<key>xpos</key>
 			<integer>890</integer>
 			<key>ypos</key>
-			<integer>170</integer>
+			<integer>160</integer>
 		</dict>
 		<key>601FACDF-C195-44C3-9CD5-9D14EEF53D80</key>
 		<dict>
 			<key>xpos</key>
 			<integer>800</integer>
 			<key>ypos</key>
-			<integer>200</integer>
+			<integer>190</integer>
 		</dict>
 		<key>79B9E144-A6E5-4994-AC86-975D9BF879FE</key>
 		<dict>
 			<key>xpos</key>
 			<integer>230</integer>
 			<key>ypos</key>
-			<integer>290</integer>
+			<integer>280</integer>
 		</dict>
 		<key>7B19FE63-C4B2-4112-B8D7-E82476C6B029</key>
 		<dict>
 			<key>xpos</key>
 			<integer>710</integer>
 			<key>ypos</key>
-			<integer>200</integer>
+			<integer>190</integer>
 		</dict>
 		<key>7C24829E-6EDA-48DF-93AE-4C238B4A6355</key>
 		<dict>
 			<key>xpos</key>
 			<integer>520</integer>
 			<key>ypos</key>
-			<integer>50</integer>
+			<integer>40</integer>
 		</dict>
 		<key>7E910536-04FD-4290-9D86-9F07F2963B11</key>
 		<dict>
 			<key>xpos</key>
 			<integer>230</integer>
 			<key>ypos</key>
-			<integer>410</integer>
+			<integer>400</integer>
 		</dict>
 		<key>8CB9E2DD-A4FC-4AA5-B229-88174066B821</key>
 		<dict>
 			<key>xpos</key>
 			<integer>890</integer>
 			<key>ypos</key>
-			<integer>50</integer>
+			<integer>40</integer>
 		</dict>
 	</dict>
 	<key>version</key>
