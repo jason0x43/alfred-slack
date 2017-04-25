@@ -95,10 +95,12 @@ type User struct {
 	Name    string `json:"name"`
 	Deleted bool   `json:"deleted"`
 	Profile struct {
-		FirstName string `json:"first_name"`
-		LastName  string `json:"last_name"`
-		RealName  string `json:"real_name"`
-		Email     string `json:"email"`
+		FirstName   string `json:"first_name"`
+		LastName    string `json:"last_name"`
+		RealName    string `json:"real_name"`
+		Email       string `json:"email"`
+		StatusText  string `json:"status_text"`
+		StatusEmoji string `json:"status_emoji"`
 	} `json:"profile"`
 	Presence string `json:"presence"`
 }

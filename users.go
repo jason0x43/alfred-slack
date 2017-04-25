@@ -55,9 +55,15 @@ func (c UsersCommand) Items(arg, data string) (items []alfred.Item, err error) {
 		}
 
 		if alfred.FuzzyMatches(user.Name, arg) || alfred.FuzzyMatches(user.Profile.RealName, arg) {
+			title := user.Name
+
+			if user.Profile.StatusText != "" {
+				title += " (" + user.Profile.StatusText + ")"
+			}
+
 			item := alfred.Item{
 				UID:          user.ID,
-				Title:        user.Name,
+				Title:        title,
 				Subtitle:     fmt.Sprintf("%s %s, %s", user.Profile.FirstName, user.Profile.LastName, user.Profile.Email),
 				Autocomplete: user.Name,
 				Arg: &alfred.ItemArg{
