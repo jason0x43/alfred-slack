@@ -157,13 +157,7 @@ func (c ChannelsCommand) Items(arg, data string) (items []alfred.Item, err error
 					UID:          channel.ID,
 					Arg: &alfred.ItemArg{
 						Keyword: "channels",
-						Mode:    alfred.ModeDo,
-						Data: alfred.Stringify(&channelConfig{
-							ToOpen: &channelID{
-								Channel: channel.ID,
-								Team:    cache.Auth.TeamID,
-							},
-						}),
+						Data:    alfred.Stringify(&channelConfig{Channel: &channel.ID}),
 					},
 				}
 
@@ -177,10 +171,16 @@ func (c ChannelsCommand) Items(arg, data string) (items []alfred.Item, err error
 				}
 
 				item.AddMod(alfred.ModCmd, alfred.ItemMod{
-					Subtitle: "Details...",
+					Subtitle: "Open this channel",
 					Arg: &alfred.ItemArg{
 						Keyword: "channels",
-						Data:    alfred.Stringify(&channelConfig{Channel: &channel.ID}),
+						Mode:    alfred.ModeDo,
+						Data: alfred.Stringify(&channelConfig{
+							ToOpen: &channelID{
+								Channel: channel.ID,
+								Team:    cache.Auth.TeamID,
+							},
+						}),
 					},
 				})
 
