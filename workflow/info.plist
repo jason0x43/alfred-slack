@@ -437,7 +437,7 @@
 				<key>escaping</key>
 				<integer>4</integer>
 				<key>keyword</key>
-				<string>slp</string>
+				<string>sls</string>
 				<key>queuedelaycustom</key>
 				<integer>3</integer>
 				<key>queuedelayimmediatelyinitially</key>
@@ -449,15 +449,15 @@
 				<key>runningsubtext</key>
 				<string>Slacking...</string>
 				<key>script</key>
-				<string>./alfred-slack "$1" "{\"keyword\":\"presence\"}"</string>
+				<string>./alfred-slack "$1" "{\"keyword\":\"status\"}"</string>
 				<key>scriptargtype</key>
 				<integer>1</integer>
 				<key>scriptfile</key>
 				<string></string>
 				<key>subtext</key>
-				<string>Show and update your presence</string>
+				<string>Show and update your status</string>
 				<key>title</key>
-				<string>slp</string>
+				<string>sls</string>
 				<key>type</key>
 				<integer>0</integer>
 				<key>withspace</key>

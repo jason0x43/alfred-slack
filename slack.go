@@ -8,6 +8,9 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"path"
+
+	alfred "github.com/jason0x43/go-alfred"
 )
 
 // slack_channels = web.get('https://slack.com/api/channels.list?token=' + api_key + '&exclude_archived=1&pretty=1').json()
@@ -25,14 +28,14 @@ type Session struct {
 type Presence string
 
 const (
-	// PresenceAuto is the 'auto' presence state
-	PresenceAuto Presence = "auto"
+	// PresenceActive is the 'auto' presence state
+	PresenceActive Presence = "active"
 
 	// PresenceAway is the 'away' presence state
 	PresenceAway Presence = "away"
 )
 
-const SlackAPI = "https://api.slack.com/api/"
+const slackAPI = "https://api.slack.com/api/"
 
 // Auth represents slack authentication info
 type Auth struct {
@@ -56,7 +59,13 @@ type Channel struct {
 	Purpose struct {
 		Value   string `json:"value"`
 		Creator string `json:"creator"`
-	} `json:"topic"`
+	} `json:"purpose"`
+}
+
+// Emoji is a custom emoji
+type Emoji struct {
+	Name string
+	URL  string
 }
 
 // PinnedMessage is a pinned message
@@ -102,7 +111,7 @@ type User struct {
 		StatusText  string `json:"status_text"`
 		StatusEmoji string `json:"status_emoji"`
 	} `json:"profile"`
-	Presence string `json:"presence"`
+	Presence Presence `json:"presence"`
 }
 
 // Title returns the title of a Pin
@@ -122,7 +131,7 @@ func OpenSession(token string) Session {
 func (session *Session) GetAuth() (Auth, error) {
 	params := map[string]string{"token": session.APIToken}
 
-	data, err := session.get(SlackAPI, "auth.test", params)
+	data, err := session.get(slackAPI, "auth.test", params)
 	if err != nil {
 		return Auth{}, err
 	}
@@ -144,7 +153,7 @@ func (session *Session) GetChannels() (channels []Channel, err error) {
 	}
 
 	var data []byte
-	if data, err = session.get(SlackAPI, "channels.list", params); err != nil {
+	if data, err = session.get(slackAPI, "channels.list", params); err != nil {
 		return
 	}
 
@@ -161,6 +170,34 @@ func (session *Session) GetChannels() (channels []Channel, err error) {
 	return response.Channels, nil
 }
 
+// GetEmoji returns the list of custom emoji for the current team
+func (session *Session) GetEmoji() (emoji []Emoji, err error) {
+	params := map[string]string{
+		"token": session.APIToken,
+	}
+
+	var data []byte
+	if data, err = session.get(slackAPI, "emoji.list", params); err != nil {
+		return
+	}
+
+	var response struct {
+		Ok    bool              `json:"ok"`
+		Emoji map[string]string `json:"emoji"`
+	}
+
+	dec := json.NewDecoder(bytes.NewReader(data))
+	if err = dec.Decode(&response); err != nil {
+		return
+	}
+
+	for k, v := range response.Emoji {
+		emoji = append(emoji, Emoji{k, v})
+	}
+
+	return
+}
+
 // GetPins for a channel
 func (session *Session) GetPins(channelID string) (pins []Pin, err error) {
 	params := map[string]string{
@@ -169,7 +206,7 @@ func (session *Session) GetPins(channelID string) (pins []Pin, err error) {
 	}
 
 	var data []byte
-	if data, err = session.get(SlackAPI, "pins.list", params); err != nil {
+	if data, err = session.get(slackAPI, "pins.list", params); err != nil {
 		return
 	}
 
@@ -197,7 +234,7 @@ func (session *Session) GetUsers() (users []User, err error) {
 	}
 
 	var data []byte
-	if data, err = session.get(SlackAPI, "users.list", params); err != nil {
+	if data, err = session.get(slackAPI, "users.list", params); err != nil {
 		return
 	}
 
@@ -215,14 +252,14 @@ func (session *Session) GetUsers() (users []User, err error) {
 }
 
 // GetPresence returns the presence status of a given user
-func (session *Session) GetPresence(userID string) (presence string, err error) {
+func (session *Session) GetPresence(userID string) (presence Presence, err error) {
 	params := map[string]string{
 		"token": session.APIToken,
 		"user":  userID,
 	}
 
 	var data []byte
-	if data, err = session.get(SlackAPI, "users.getPresence", params); err != nil {
+	if data, err = session.get(slackAPI, "users.getPresence", params); err != nil {
 		return
 	}
 
@@ -236,18 +273,23 @@ func (session *Session) GetPresence(userID string) (presence string, err error) 
 		return
 	}
 
-	return response.Presence, nil
+	return Presence(response.Presence), nil
 }
 
 // SetPresence updates the presence of the authenticated user
 func (session *Session) SetPresence(presence Presence) (err error) {
 	params := map[string]string{
-		"token":    session.APIToken,
-		"presence": string(presence),
+		"token": session.APIToken,
+	}
+
+	if presence == PresenceActive {
+		params["presence"] = "auto"
+	} else {
+		params["presence"] = "away"
 	}
 
 	var data []byte
-	if data, err = session.get(SlackAPI, "users.setPresence", params); err != nil {
+	if data, err = session.get(slackAPI, "users.setPresence", params); err != nil {
 		return
 	}
 
@@ -270,6 +312,47 @@ func (session *Session) SetPresence(presence Presence) (err error) {
 	return
 }
 
+// SetStatus updates a user's status
+func (session *Session) SetStatus(text, emoji string) (err error) {
+	params := map[string]string{
+		"token": session.APIToken,
+		"profile": alfred.Stringify(map[string]string{
+			"status_text":  text,
+			"status_emoji": emoji,
+		}),
+	}
+
+	data := map[string]string{
+		"profile": alfred.Stringify(map[string]string{
+			"status_text":  text,
+			"status_emoji": emoji,
+		}),
+	}
+
+	var rdata []byte
+	if rdata, err = session.post(slackAPI, "users.profile.set", params, data); err != nil {
+		return
+	}
+
+	dlog.Printf("response: %s", rdata)
+
+	var response struct {
+		Ok    bool   `json:"ok"`
+		Error string `json:"error"`
+	}
+
+	dec := json.NewDecoder(bytes.NewReader(rdata))
+	if err = dec.Decode(&response); err != nil {
+		return
+	}
+
+	if !response.Ok {
+		return fmt.Errorf("Unable to set status: %s", response.Error)
+	}
+
+	return
+}
+
 // OpenDirectMessage opens a direct message channel and returns the channel ID
 func (session *Session) OpenDirectMessage(userID string) (channelID string, err error) {
 	params := map[string]string{
@@ -278,7 +361,7 @@ func (session *Session) OpenDirectMessage(userID string) (channelID string, err 
 	}
 
 	var data []byte
-	if data, err = session.get(SlackAPI, "im.open", params); err != nil {
+	if data, err = session.get(slackAPI, "im.open", params); err != nil {
 		return
 	}
 
@@ -339,8 +422,16 @@ func (session *Session) get(requestURL string, path string, params map[string]st
 	return session.request("GET", requestURL, nil)
 }
 
-func (session *Session) post(requestURL string, path string, data interface{}) ([]byte, error) {
+func (session *Session) post(requestURL string, path string, params map[string]string, data interface{}) ([]byte, error) {
 	requestURL += path
+
+	if params != nil {
+		data := url.Values{}
+		for key, value := range params {
+			data.Set(key, value)
+		}
+		requestURL += "?" + data.Encode()
+	}
 
 	var body []byte
 	var err error
@@ -355,4 +446,33 @@ func (session *Session) post(requestURL string, path string, data interface{}) (
 	dlog.Printf("POSTing to URL: %s", requestURL)
 	dlog.Printf("data: %s", body)
 	return session.request("POST", requestURL, bytes.NewBuffer(body))
+}
+
+// Filename returns the filename of an emoji
+func (e *Emoji) Filename() string {
+	_, filename := path.Split(e.URL)
+	return filename
+}
+
+// Retrieve retrieves a particular emoji and saves it into the given directory, which must exist
+func (e *Emoji) Retrieve(dir string) (filename string, err error) {
+	req, err := http.NewRequest("GET", e.URL, nil)
+
+	var resp *http.Response
+	if resp, err = client.Do(req); err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	var data []byte
+	if data, err = ioutil.ReadAll(resp.Body); err != nil {
+		return
+	}
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 400 {
+		err = fmt.Errorf(resp.Status)
+	}
+
+	filename = path.Join(dir, e.Filename())
+	return filename, ioutil.WriteFile(filename, data, 0644)
 }

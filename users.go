@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/jason0x43/go-alfred"
@@ -45,67 +46,146 @@ func (c UsersCommand) Items(arg, data string) (items []alfred.Item, err error) {
 		}
 	}
 
-	for _, user := range cache.Users {
-		if user.Deleted {
-			continue
-		}
-
-		if channel != nil && !isInChannel(user.ID, channel) {
-			continue
-		}
-
-		if alfred.FuzzyMatches(user.Name, arg) || alfred.FuzzyMatches(user.Profile.RealName, arg) {
-			title := user.Name
-
-			if user.Profile.StatusText != "" {
-				title += " (" + user.Profile.StatusText + ")"
-			}
-
-			item := alfred.Item{
-				UID:          user.ID,
-				Title:        title,
-				Subtitle:     fmt.Sprintf("%s %s, %s", user.Profile.FirstName, user.Profile.LastName, user.Profile.Email),
-				Autocomplete: user.Name,
-				Arg: &alfred.ItemArg{
-					Keyword: "users",
-					Mode:    alfred.ModeDo,
-					Data: alfred.Stringify(&userConfig{
-						ToMessage: &dmID{
-							User: user.ID,
-							Team: cache.Auth.TeamID,
-						},
-					}),
-				},
-			}
-
-			if user.Presence == "away" {
-				item.Icon = "icon_faded.png"
-
-				// If the user is away, take away their UID so that Alfred will
-				// leave them after the active users
-				item.UID = ""
-			}
-
-			item.AddMod(alfred.ModCmd, alfred.ItemMod{
-				Subtitle: "Open profile",
-				Arg: &alfred.ItemArg{
-					Keyword: "users",
-					Mode:    alfred.ModeDo,
-					Data: alfred.Stringify(&userConfig{
-						ToOpen: &dmID{
-							User: user.ID,
-							Team: cache.Auth.TeamID,
-						},
-					}),
-				},
-			})
-
-			items = append(items, item)
+	var user User
+	if cfg.User != "" {
+		if u, found := getUser(cfg.User); found {
+			user = u
 		}
 	}
 
-	alfred.FuzzySort(items, arg)
-	sort.Stable(byStatus(items))
+	if user.ID != "" {
+		if alfred.FuzzyMatches("username:", arg) {
+			items = append(items, alfred.Item{
+				Title: fmt.Sprintf("Username: %s", user.Name),
+			})
+		}
+
+		if alfred.FuzzyMatches("status:", arg) {
+			item := alfred.Item{
+				Title: fmt.Sprintf("Status: %s", user.Profile.StatusText),
+			}
+
+			if user.Profile.StatusEmoji != "" {
+				var emojiFile string
+				emojiFile, err = getEmojiFromSprite(user.Profile.StatusEmoji)
+				if err != nil {
+					emojiFile, err = getEmojiFromSlack(user.Profile.StatusEmoji)
+				}
+
+				if err == nil {
+					dlog.Printf("Setting icon to", emojiFile)
+					item.Icon = emojiFile
+				}
+			}
+
+			items = append(items, item)
+		}
+
+		if alfred.FuzzyMatches("presence:", arg) {
+			items = append(items, alfred.Item{
+				Title: fmt.Sprintf("Presence: %s", user.Presence),
+			})
+		}
+
+		if alfred.FuzzyMatches("id:", arg) {
+			items = append(items, alfred.Item{
+				Title: fmt.Sprintf("ID: %s", user.ID),
+			})
+		}
+
+		if alfred.FuzzyMatches("name:", arg) {
+			items = append(items, alfred.Item{
+				Title: fmt.Sprintf("Name: %s", user.Profile.RealName),
+			})
+		}
+
+		if alfred.FuzzyMatches("email:", arg) {
+			items = append(items, alfred.Item{
+				Title: fmt.Sprintf("Email: %s", user.Profile.Email),
+			})
+		}
+	} else {
+		for _, user := range cache.Users {
+			if user.Deleted {
+				dlog.Print("Skipping deleted user ", user.Name)
+				continue
+			}
+
+			if user.Profile.Email == "" {
+				dlog.Print("Skipping fake user ", user.Name)
+				continue
+			}
+
+			if channel != nil && !isInChannel(user.ID, channel) {
+				continue
+			}
+
+			if alfred.FuzzyMatches(user.ID, arg) || alfred.FuzzyMatches(user.Profile.RealName, arg) {
+				item := alfred.Item{
+					Title:        user.Name,
+					Subtitle:     user.Profile.StatusText,
+					Autocomplete: user.Name,
+					Arg: &alfred.ItemArg{
+						Keyword: "users",
+						Data:    alfred.Stringify(&userConfig{User: user.ID}),
+					},
+				}
+
+				if user.Presence == PresenceAway {
+					item.Title = fmt.Sprintf("%s %s", AwayMarker, item.Title)
+				} else {
+					item.Title = fmt.Sprintf("%s %s", ActiveMarker, item.Title)
+				}
+
+				// Show a user's status icon if they have one set
+				if user.Profile.StatusEmoji != "" {
+					var emojiFile string
+					emojiFile, err = getEmojiFromSprite(user.Profile.StatusEmoji)
+					if err != nil {
+						emojiFile, err = getEmojiFromSlack(user.Profile.StatusEmoji)
+					}
+
+					if err == nil {
+						dlog.Printf("Setting icon to", emojiFile)
+						item.Icon = emojiFile
+					}
+				}
+
+				item.AddMod(alfred.ModCmd, alfred.ItemMod{
+					Subtitle: "Chat with user",
+					Arg: &alfred.ItemArg{
+						Keyword: "users",
+						Mode:    alfred.ModeDo,
+						Data: alfred.Stringify(&userConfig{
+							ToMessage: &dmID{
+								User: user.ID,
+								Team: cache.Auth.TeamID,
+							},
+						}),
+					},
+				})
+
+				item.AddMod(alfred.ModAlt, alfred.ItemMod{
+					Subtitle: "Open profile",
+					Arg: &alfred.ItemArg{
+						Keyword: "users",
+						Mode:    alfred.ModeDo,
+						Data: alfred.Stringify(&userConfig{
+							ToOpen: &dmID{
+								User: user.ID,
+								Team: cache.Auth.TeamID,
+							},
+						}),
+					},
+				})
+
+				items = append(items, item)
+			}
+		}
+
+		alfred.FuzzySort(items, arg)
+		sort.Stable(byStatus(items))
+	}
 
 	return
 }
@@ -151,6 +231,7 @@ type dmID struct {
 }
 
 type userConfig struct {
+	User      string
 	ToMessage *dmID
 	ToOpen    *dmID
 	Channel   *string
@@ -168,5 +249,6 @@ func (b byStatus) Swap(i, j int) {
 
 func (b byStatus) Less(i, j int) bool {
 	dlog.Printf("comparing %s to %s", b[i].Title, b[j].Title)
-	return b[i].Icon != "icon_faded.png" && b[j].Icon == "icon_faded.png"
+	// TODO Actually look at the user, not just item data
+	return strings.HasPrefix(b[i].Title, string(ActiveMarker)) && strings.HasPrefix(b[j].Title, string(AwayMarker))
 }

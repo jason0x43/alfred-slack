@@ -12,19 +12,33 @@ import (
 
 var cacheFile string
 var configFile string
+var emojiDir string
 var config configStruct
 var cache cacheStruct
 var workflow alfred.Workflow
+
+type PresenceMarker string
+
+const (
+	// ActiveMarker marks the 'auto' presence state
+	ActiveMarker PresenceMarker = "●"
+
+	// AwayMarker marks the 'away' presence state
+	AwayMarker PresenceMarker = "○"
+)
 
 type configStruct struct {
 	APIToken string `json:"api_key"`
 }
 
 type cacheStruct struct {
-	Time     time.Time
-	Auth     Auth
-	Channels []Channel
-	Users    []User
+	Time         time.Time
+	Auth         Auth
+	Presence     Presence
+	PresenceTime time.Time
+	Channels     []Channel
+	Users        []User
+	Emoji        []Emoji
 }
 
 var dlog = log.New(os.Stderr, "[redmine] ", log.LstdFlags)
@@ -42,9 +56,13 @@ func main() {
 
 	configFile = path.Join(workflow.DataDir(), "config.json")
 	cacheFile = path.Join(workflow.CacheDir(), "cache.json")
+	emojiDir = path.Join(workflow.CacheDir(), "emoji")
+
+	os.MkdirAll(emojiDir, 0755)
 
 	dlog.Println("Using config file", configFile)
 	dlog.Println("Using cache file", cacheFile)
+	dlog.Println("Using emoji dir", emojiDir)
 
 	err = alfred.LoadJSON(configFile, &config)
 	if err != nil {
@@ -59,7 +77,7 @@ func main() {
 		TokenCommand{},
 		ChannelsCommand{},
 		UsersCommand{},
-		PresenceCommand{},
+		StatusCommand{},
 		ResetCommand{},
 	}
 

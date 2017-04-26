@@ -55,6 +55,14 @@ func refresh() (err error) {
 		}
 	}()
 
+	go func() {
+		if emoji, err := s.GetEmoji(); err != nil {
+			errorChan <- err
+		} else {
+			dataChan <- emoji
+		}
+	}()
+
 	// wait for all functions to complete
 	for i := 0; i < 3; i++ {
 		select {
@@ -69,6 +77,9 @@ func refresh() (err error) {
 			case []User:
 				cache.Users = value
 				dlog.Println("Got users")
+			case []Emoji:
+				cache.Emoji = value
+				dlog.Println("Got emoji")
 			}
 		case err := <-errorChan:
 			return err
@@ -107,7 +118,7 @@ func refresh() (err error) {
 
 type userPresence struct {
 	ID       string
-	Presence string
+	Presence Presence
 }
 
 func getChannel(id string) (c Channel, found bool) {

@@ -154,7 +154,6 @@ func (c ChannelsCommand) Items(arg, data string) (items []alfred.Item, err error
 				item := alfred.Item{
 					Title:        channel.Name,
 					Autocomplete: channel.Name,
-					UID:          channel.ID,
 					Arg: &alfred.ItemArg{
 						Keyword: "channels",
 						Data:    alfred.Stringify(&channelConfig{Channel: &channel.ID}),
@@ -205,11 +204,11 @@ func (c ChannelsCommand) Do(data string) (out string, err error) {
 	}
 
 	if cfg.ToOpen != nil {
-		browser.OpenURL(fmt.Sprintf("slack://channel?id=%s&team=%s", cfg.ToOpen.Channel, cfg.ToOpen.Team))
+		err = browser.OpenURL(fmt.Sprintf("slack://channel?id=%s&team=%s", cfg.ToOpen.Channel, cfg.ToOpen.Team))
 	}
 
 	if cfg.ToBrowse != nil {
-		browser.OpenURL(*cfg.ToBrowse)
+		err = browser.OpenURL(*cfg.ToBrowse)
 	}
 
 	return
