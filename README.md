@@ -1,20 +1,17 @@
-alfred-slack
-============
+# alfred-slack
 
 An Alfred workflow for Slacking
 
 ![Screenshot](doc/main_menu.png?raw=true)
 
-Installation
-------------
+## Installation
 
 Download the latest workflow package from the [releases
 page](https://github.com/jason0x43/alfred-slack/releases) and double click it —
 Alfred will take care of the rest.
 
 
-Usage
------
+## Usage
 
 The workflow provides one universal keyword, “slk”, from which all functions
 can be accessed. The first time you use the keyword, only one item will be
@@ -34,9 +31,7 @@ token, browse to https://api.slack.com/custom-integrations/legacy-tokens
 “Manually enter a token” item, and paste the token value into the resulting
 dialog.
 
-
-Channels
---------
+### Channels
 
 The `channels` command (or `slc`) will list the channels available to your
 team. Channels you are not subscribed to will have a faded icon.
@@ -45,9 +40,7 @@ team. Channels you are not subscribed to will have a faded icon.
   “Pins...” and “Members...”, which can be actioned for more information.
 * Holding Cmd while actioning a channel will open it in the Slack app.
 
-
-Users
------
+### Users
 
 The `users` command (or `slu`) will list the users in your team. The user’s
 presence is represented by a filled (active) or empty (away) disc next to the
@@ -59,9 +52,7 @@ icon. If the user has a status message set, that will be the item’s subtitle.
 * Holding Alt while actioning the user will open the user’s profile in the
   Slack app.
 
-
-Status
-------
+### Status
 
 The `status` command (or `sls`) will show your current presence state, either
 “Active” or “Away”.
@@ -73,3 +64,7 @@ The `status` command (or `sls`) will show your current presence state, either
   will follow the same steps, but will set your status to ‘active’.
 * Holding Alt while entering a status message (or not) and actioning the item
   will follow the same steps, but will set your status to ‘away’.
+
+## Credits
+
+This workflow uses emoji sprites from https://github.com/iamcal/emoji-data.
