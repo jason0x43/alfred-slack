@@ -28,6 +28,12 @@ The main functions also have individual keywords:
 * `slu` - List users on your team
 * `sls` - Show and update your status and presence
 
+Initially, `slk` will ask for an API token (Oauth support is coming). To get a
+token, browse to https://api.slack.com/custom-integrations/legacy-tokens
+(you’ll need to login) and generate one. Then run `slk`, action the
+“Manually enter a token” item, and paste the token value into the resulting
+dialog.
+
 
 Channels
 --------
