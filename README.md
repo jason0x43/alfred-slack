@@ -65,6 +65,9 @@ The `status` command (or `sls`) will show your current presence state, either
 * Holding Alt while entering a status message (or not) and actioning the item
   will follow the same steps, but will set your status to ‘away’.
 
+Note that the first time you try to set your status there may be a delay of
+several seconds as the workflow expands all the sprite icons.
+
 ## Credits
 
 This workflow uses emoji sprites from https://github.com/iamcal/emoji-data.
