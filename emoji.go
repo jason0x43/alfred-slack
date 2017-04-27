@@ -85,6 +85,20 @@ func getEmojiFromSprite(name string) (filename string, err error) {
 	return
 }
 
+func getAllSpriteEmoji() (names []string, err error) {
+	if len(spriteInfo) == 0 {
+		if err = alfred.LoadJSON(path.Join(workflow.WorkflowDir(), "emoji.json"), &spriteInfo); err != nil {
+			return
+		}
+	}
+
+	for i := range spriteInfo {
+		names = append(names, spriteInfo[i].Name)
+	}
+
+	return
+}
+
 func fileExists(filename string) (exists bool) {
 	if _, err := os.Stat(filename); err != nil {
 		return false

@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/jason0x43/go-alfred"
@@ -30,23 +31,54 @@ func (c StatusCommand) Items(arg, data string) (items []alfred.Item, err error) 
 	}
 
 	if cfg.StatusText != nil {
+		var emoji string
+		var emojiName string
+
+		if cfg.StatusEmoji != nil {
+			emoji = *cfg.StatusEmoji
+			emojiName = strings.TrimSuffix(strings.TrimPrefix(*cfg.StatusEmoji, ":"), ":")
+		}
+
+		if emoji != "" && alfred.FuzzyMatches(*cfg.StatusEmoji, arg) {
+			item := alfred.Item{
+				Title: emojiName,
+				Arg: &alfred.ItemArg{
+					Keyword: "status",
+					Mode:    alfred.ModeDo,
+					Data:    alfred.Stringify(statusConfig{NewState: cfg.NewState, StatusText: cfg.StatusText, StatusEmoji: &emoji}),
+				},
+			}
+
+			if emojiFile, err := getEmojiFromSlack(emoji); err == nil {
+				item.Icon = emojiFile
+			}
+
+			items = append(items, item)
+		}
+
 		if arg == "" {
-			text := ""
+			emoji := ""
 			items = append(items, alfred.Item{
 				Title: "No status icon",
 				Icon:  "none",
 				Arg: &alfred.ItemArg{
 					Keyword: "status",
 					Mode:    alfred.ModeDo,
-					Data:    alfred.Stringify(statusConfig{NewState: cfg.NewState, StatusText: cfg.StatusText, StatusEmoji: &text}),
+					Data:    alfred.Stringify(statusConfig{NewState: cfg.NewState, StatusText: cfg.StatusText, StatusEmoji: &emoji}),
 				},
 			})
 		}
 
 		for i := range cache.Emoji {
 			name := cache.Emoji[i].Name
-			ename := ":" + name + ":"
+
+			if name == emojiName {
+				continue
+			}
+
 			if alfred.FuzzyMatches(name, arg) {
+				ename := ":" + name + ":"
+
 				item := alfred.Item{
 					Title: name,
 					Arg: &alfred.ItemArg{
@@ -57,13 +89,43 @@ func (c StatusCommand) Items(arg, data string) (items []alfred.Item, err error) 
 				}
 
 				if emojiFile, err := getEmojiFromSlack(name); err == nil {
-					dlog.Printf("Setting icon to", emojiFile)
 					item.Icon = emojiFile
 				}
 
 				items = append(items, item)
 			}
 		}
+
+		if spriteEmoji, err := getAllSpriteEmoji(); err == nil {
+			for _, name := range spriteEmoji {
+				if name == emojiName {
+					continue
+				}
+
+				if alfred.FuzzyMatches(name, arg) {
+					ename := ":" + name + ":"
+
+					item := alfred.Item{
+						Title: name,
+						Arg: &alfred.ItemArg{
+							Keyword: "status",
+							Mode:    alfred.ModeDo,
+							Data:    alfred.Stringify(statusConfig{NewState: cfg.NewState, StatusText: cfg.StatusText, StatusEmoji: &ename}),
+						},
+					}
+
+					if emojiFile, err := getEmojiFromSprite(name); err == nil {
+						item.Icon = emojiFile
+					}
+
+					items = append(items, item)
+				}
+			}
+		} else {
+			dlog.Print("Unable to load sprite icons: ", err)
+		}
+
+		alfred.FuzzySort(items, arg)
 	} else {
 		i := indexOfUserByID(cache.Auth.UserID)
 
@@ -91,6 +153,11 @@ func (c StatusCommand) Items(arg, data string) (items []alfred.Item, err error) 
 
 		if arg == "" {
 			title = user.Profile.StatusText
+			if user.Profile.StatusText == "" {
+				subtitle = "No status message"
+			} else {
+				subtitle = "Clear existing status message"
+			}
 		} else {
 			title = arg
 			subtitle = "Update status message"
@@ -101,7 +168,7 @@ func (c StatusCommand) Items(arg, data string) (items []alfred.Item, err error) 
 			Subtitle: subtitle,
 			Arg: &alfred.ItemArg{
 				Keyword: "status",
-				Data:    alfred.Stringify(statusConfig{StatusText: &arg}),
+				Data:    alfred.Stringify(statusConfig{StatusText: &arg, StatusEmoji: &user.Profile.StatusEmoji}),
 			},
 		}
 
@@ -148,7 +215,6 @@ func (c StatusCommand) Items(arg, data string) (items []alfred.Item, err error) 
 			}
 
 			if err == nil {
-				dlog.Printf("Setting icon to", emojiFile)
 				item.Icon = emojiFile
 			}
 		}
@@ -200,7 +266,7 @@ func (c StatusCommand) Do(data string) (out string, err error) {
 			if statusText != "" {
 				out += fmt.Sprintf("Status set to %s", statusText)
 			} else {
-				out += "Status cleared"
+				out += "Status message cleared, emoji set to " + statusEmoji
 			}
 			alfred.SaveJSON(cacheFile, &cache)
 		}
