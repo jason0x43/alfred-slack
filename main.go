@@ -34,7 +34,6 @@ type configStruct struct {
 type cacheStruct struct {
 	Time         time.Time
 	Auth         Auth
-	Presence     Presence
 	PresenceTime time.Time
 	Channels     []Channel
 	Users        []User

@@ -147,9 +147,8 @@ func (c StatusCommand) Items(arg, data string) (items []alfred.Item, err error) 
 		var title string
 		var subtitle string
 
-		presence := cache.Presence
-
 		user := cache.Users[i]
+		presence := user.Presence
 
 		if arg == "" {
 			title = user.Profile.StatusText
