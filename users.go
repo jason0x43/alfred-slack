@@ -248,7 +248,6 @@ func (b byStatus) Swap(i, j int) {
 }
 
 func (b byStatus) Less(i, j int) bool {
-	dlog.Printf("comparing %s to %s", b[i].Title, b[j].Title)
 	// TODO Actually look at the user, not just item data
 	return strings.HasPrefix(b[i].Title, string(ActiveMarker)) && strings.HasPrefix(b[j].Title, string(AwayMarker))
 }

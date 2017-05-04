@@ -41,7 +41,7 @@ type cacheStruct struct {
 	Emoji        []Emoji
 }
 
-var dlog = log.New(os.Stderr, "[redmine] ", log.LstdFlags)
+var dlog = log.New(os.Stderr, "[slack] ", log.LstdFlags)
 
 func main() {
 	var err error

@@ -237,6 +237,5 @@ func (b bySubscription) Swap(i, j int) {
 }
 
 func (b bySubscription) Less(i, j int) bool {
-	dlog.Printf("comparing %s to %s", b[i].Title, b[j].Title)
 	return b[i].Icon != "icon_faded.png" && b[j].Icon == "icon_faded.png"
 }
