@@ -30,45 +30,15 @@ func (c StatusCommand) Items(arg, data string) (items []alfred.Item, err error) 
 		}
 	}
 
+	var emoji string
+	var emojiName string
+
+	if cfg.StatusEmoji != nil {
+		emoji = *cfg.StatusEmoji
+		emojiName = strings.TrimSuffix(strings.TrimPrefix(emoji, ":"), ":")
+	}
+
 	if cfg.StatusText != nil {
-		var emoji string
-		var emojiName string
-
-		if cfg.StatusEmoji != nil {
-			emoji = *cfg.StatusEmoji
-			emojiName = strings.TrimSuffix(strings.TrimPrefix(*cfg.StatusEmoji, ":"), ":")
-		}
-
-		if emoji != "" && alfred.FuzzyMatches(*cfg.StatusEmoji, arg) {
-			item := alfred.Item{
-				Title: emojiName,
-				Arg: &alfred.ItemArg{
-					Keyword: "status",
-					Mode:    alfred.ModeDo,
-					Data:    alfred.Stringify(statusConfig{NewState: cfg.NewState, StatusText: cfg.StatusText, StatusEmoji: &emoji}),
-				},
-			}
-
-			if emojiFile, err := getEmojiFromSlack(emoji); err == nil {
-				item.Icon = emojiFile
-			}
-
-			items = append(items, item)
-		}
-
-		if arg == "" {
-			emoji := ""
-			items = append(items, alfred.Item{
-				Title: "No status icon",
-				Icon:  "none",
-				Arg: &alfred.ItemArg{
-					Keyword: "status",
-					Mode:    alfred.ModeDo,
-					Data:    alfred.Stringify(statusConfig{NewState: cfg.NewState, StatusText: cfg.StatusText, StatusEmoji: &emoji}),
-				},
-			})
-		}
-
 		for i := range cache.Emoji {
 			name := cache.Emoji[i].Name
 
@@ -126,8 +96,45 @@ func (c StatusCommand) Items(arg, data string) (items []alfred.Item, err error) 
 		}
 
 		alfred.FuzzySort(items, arg)
+
+		if arg == "" {
+			emoji := ""
+			item := alfred.Item{
+				Title: "No status icon",
+				Icon:  "none",
+				Arg: &alfred.ItemArg{
+					Keyword: "status",
+					Mode:    alfred.ModeDo,
+					Data:    alfred.Stringify(statusConfig{NewState: cfg.NewState, StatusText: cfg.StatusText, StatusEmoji: &emoji}),
+				},
+			}
+
+			items = append([]alfred.Item{item}, items...)
+		}
+
+		dlog.Print("status emoji: ", emoji)
+		if emoji != "" && alfred.FuzzyMatches(*cfg.StatusEmoji, arg) {
+			item := alfred.Item{
+				Title: emojiName,
+				Arg: &alfred.ItemArg{
+					Keyword: "status",
+					Mode:    alfred.ModeDo,
+					Data:    alfred.Stringify(statusConfig{NewState: cfg.NewState, StatusText: cfg.StatusText, StatusEmoji: &emoji}),
+				},
+			}
+
+			if emojiFile, err := getEmojiFromSlack(emoji); err == nil {
+				item.Icon = emojiFile
+			}
+
+			items = append([]alfred.Item{item}, items...)
+		}
 	} else {
 		i := indexOfUserByID(cache.Auth.UserID)
+		if i == -1 {
+			err = fmt.Errorf("The user cache is empty")
+			return
+		}
 
 		if time.Now().Sub(cache.PresenceTime).Minutes() > 1.0 || cache.Users[i].Presence == "" {
 			s := OpenSession(config.APIToken)
@@ -188,7 +195,7 @@ func (c StatusCommand) Items(arg, data string) (items []alfred.Item, err error) 
 			Subtitle: modSubtitle,
 			Arg: &alfred.ItemArg{
 				Keyword: "status",
-				Data:    alfred.Stringify(statusConfig{NewState: PresenceActive, StatusText: &arg}),
+				Data:    alfred.Stringify(statusConfig{NewState: PresenceActive, StatusText: &arg, StatusEmoji: &user.Profile.StatusEmoji}),
 			},
 		})
 
@@ -202,7 +209,7 @@ func (c StatusCommand) Items(arg, data string) (items []alfred.Item, err error) 
 			Subtitle: modSubtitle,
 			Arg: &alfred.ItemArg{
 				Keyword: "status",
-				Data:    alfred.Stringify(statusConfig{NewState: PresenceAway, StatusText: &arg}),
+				Data:    alfred.Stringify(statusConfig{NewState: PresenceAway, StatusText: &arg, StatusEmoji: &user.Profile.StatusEmoji}),
 			},
 		})
 
@@ -240,14 +247,19 @@ func (c StatusCommand) Do(data string) (out string, err error) {
 	if cfg.NewState != "" {
 		if errPresence = s.SetPresence(cfg.NewState); errPresence == nil {
 			i := indexOfUserByID(cache.Auth.UserID)
-			if cfg.NewState == PresenceActive {
-				cache.Users[i].Presence = "active"
+			if i == -1 {
+				dlog.Printf("The user cache is empty")
+				errPresence = fmt.Errorf("The user cache is empty")
 			} else {
-				cache.Users[i].Presence = "away"
-			}
+				if cfg.NewState == PresenceActive {
+					cache.Users[i].Presence = "active"
+				} else {
+					cache.Users[i].Presence = "away"
+				}
 
-			out = fmt.Sprintf("Presence set to %s", cfg.NewState)
-			alfred.SaveJSON(cacheFile, &cache)
+				out = fmt.Sprintf("Presence set to %s", cfg.NewState)
+				alfred.SaveJSON(cacheFile, &cache)
+			}
 		}
 	}
 
@@ -255,19 +267,24 @@ func (c StatusCommand) Do(data string) (out string, err error) {
 		statusText := *cfg.StatusText
 		statusEmoji := *cfg.StatusEmoji
 
-		if errStatus = s.SetStatus(statusText, statusEmoji); err == nil {
+		if errStatus = s.SetStatus(statusText, statusEmoji); errStatus == nil {
 			i := indexOfUserByID(cache.Auth.UserID)
-			cache.Users[i].Profile.StatusText = statusText
-			cache.Users[i].Profile.StatusEmoji = statusEmoji
-			if out != "" {
-				out += ", "
-			}
-			if statusText != "" {
-				out += fmt.Sprintf("Status set to %s", statusText)
+			if i == -1 {
+				dlog.Printf("The user cache is empty")
+				errStatus = fmt.Errorf("The user cache is empty")
 			} else {
-				out += "Status message cleared, emoji set to " + statusEmoji
+				cache.Users[i].Profile.StatusText = statusText
+				cache.Users[i].Profile.StatusEmoji = statusEmoji
+				if out != "" {
+					out += ", "
+				}
+				if statusText != "" {
+					out += fmt.Sprintf("Status set to %s", statusText)
+				} else {
+					out += "Status message cleared, emoji set to " + statusEmoji
+				}
+				alfred.SaveJSON(cacheFile, &cache)
 			}
-			alfred.SaveJSON(cacheFile, &cache)
 		}
 	}
 
